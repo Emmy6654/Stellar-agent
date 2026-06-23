@@ -40,6 +40,26 @@ if (!agentId) {
   console.log(`[${AGENT_ID}] Already agent #${agentId}`);
 }
 
+const registryUrl = (process.env.REGISTRY_URL ?? "http://localhost:4500").replace(/\/+$/, "");
+
+async function heartbeat() {
+  try {
+    const res = await fetch(`${registryUrl}/heartbeat`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ agentId: AGENT_ID }),
+    });
+    if (!res.ok) {
+      console.warn(`[${AGENT_ID}] Heartbeat failed (${res.status})`);
+    }
+  } catch {
+    console.warn(`[${AGENT_ID}] Registry unreachable at ${registryUrl}`);
+  }
+}
+
+setInterval(heartbeat, 60_000);
+heartbeat();
+
 const app = express();
 app.use(express.json());
 
